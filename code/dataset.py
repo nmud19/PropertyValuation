@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from scipy.stats import skew
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -13,16 +13,15 @@ class HousePricesDataSet(Dataset) :
     """Dataset class to read the house price dataset class"""
     def __init__(
         self, 
-        train_data_dir:str,
-        feature_engg_func:Callable
+        df:pd.DataFrame,
         )->None : 
         """Init function to load the df, has hardcoded feature engineering for now"""
         super().__init__()
-        df = pd.read_csv(train_data_dir)
+        #df = pd.read_csv(train_data_dir)
         y_var = 'SalePrice'
         
         # Create xvars and y
-        self.x_tr = feature_engg_func(df.drop(columns=y_var))
+        self.x_tr = df.drop(columns=y_var) #feature_engg_func(df.drop(columns=y_var))
         print("NUM FEATS : ",self.x_tr.shape)
         self.y_tr = df[y_var]
         self.x_tr = torch.tensor(self.x_tr.values).float()

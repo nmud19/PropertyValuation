@@ -28,6 +28,28 @@ class QuantModel(LightningModule):
         loss = quantile_loss(y_hat, y,self._quantile_list)
         return loss
 
+    def validation_step(self, batch, batch_idx):
+        """Invoked while training the model. Quantile loss is used here."""
+        x, y = batch
+        y_hat = self(x)
+        loss = quantile_loss(y_hat, y,self._quantile_list)
+        self.log_dict({"quant_loss" : loss} )
+        return loss
+    
+    def test_step(self, batch, batch_idx):
+        """Invoked while training the model. Quantile loss is used here."""
+        x, y = batch
+        y_hat = self(x)
+        loss = quantile_loss(y_hat, y,self._quantile_list)
+        self.log_dict({"quant_loss" : loss} )
+        return loss
+
+    def predict_step(self, batch, batch_idx):
+        """Invoked while training the model. Quantile loss is used here."""
+        x, _ = batch
+        y_hat = self(x)
+        return y_hat
+
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=0.02)
 
