@@ -1,3 +1,4 @@
+from generate_output import GenerateOutput
 from dataset import HousePricesDataSet
 from dataloader import HousePriceLoader
 from feature_engg import feature_engg
@@ -29,7 +30,7 @@ def main()-> None:
 
     # Train the model
     trainer = Trainer(
-        max_epochs=1000,
+        max_epochs=2000,
     )
     quant_model = QuantModel(
         num_features=285, # Num of input features set in the dataset function
@@ -40,55 +41,44 @@ def main()-> None:
         train_dataloader= train_dataloader, 
         val_dataloaders= val_dataloader,
     )
-
-    # test step 
-    trainer.test(dataloaders=test_dataloader)
-
-    # Generate individual preds
-    all_preds=[]
-    for batch_idx, batch in enumerate(test_dataloader):
-        pred = quant_model.predict_step(batch, batch_idx)
-        all_preds.append(pred)
-
-    # predictions
-    preds = pd.DataFrame(
-        all_preds[0].detach().numpy(), 
-        columns=["ub", "mean", "lb"]
+ 
+    generate_output = GenerateOutput(
+        dataloader=val_dataloader, 
+        trainer=trainer, 
+        model=quant_model, 
+        actuals=data.val.head(200).SalePrice.values,
+        train_dataloader=train_dataloader,
+        feature_names=data.val.drop(columns=['SalePrice']).columns,
+        mode='val'
     )
-    for x in preds : 
-        preds[x] = np.expm1(preds[x])
+    generate_output.plot_predictions()
+    generate_output.explain_shap()
     
-    preds['actuals']=np.expm1(data.te.SalePrice.values)
-    print()
-
-    def plot_mean_and_CI(actuals, mean, lb, ub, color_mean=None, 
-                     color_shading=None, color_actuals=None):
-        # plot the shaded range of the confidence intervals
-        plt.clf()
-        plt.fill_between(
-            range(mean.shape[0]), 
-            ub, lb,
-            color=color_shading, 
-            alpha=.1, 
-            label = "{} % region".format( int(0.95*100))
-        )
-        # plot the mean on top
-        plt.plot(mean, color_mean, label = "Predictions")
-        plt.plot(actuals, color_actuals, label = "Actuals")
-        plt.legend()
-        plt.show()
-        
-
-    fig = plt.figure(1, figsize=(20, 6))
-    plot_mean_and_CI(
-        actuals = preds['actuals'], 
-        mean = preds['mean'] , 
-        lb = preds[f'lb'] ,
-        ub = preds[f'ub'] , 
-        color_mean='r', 
-        color_shading='r', 
-        color_actuals='g', 
+    #
+    generate_output = GenerateOutput(
+        dataloader=test_dataloader, 
+        trainer=trainer, 
+        model=quant_model, 
+        actuals=data.te.head(200).SalePrice.values,
+        train_dataloader=train_dataloader,
+        feature_names=data.te.drop(columns=['SalePrice']).columns,
+        mode='test'
     )
+    generate_output.plot_predictions()
+    generate_output.explain_shap()
+
+    # shap.initjs()
+    # shap.force_plot(
+    #     explainer.expected_value[0], 
+    #     shap_values[0][0], 
+    #     features = data.val.drop(columns=['SalePrice']).columns
+    # )
+
+    # shap.plots._waterfall.waterfall_legacy(
+    #     explainer.expected_value[0], 
+    #     shap_values[0][0], 
+    #     feature_names = data.val.drop(columns=['SalePrice']).columns
+    # )
 
 
 if "__main__" == __name__ : 

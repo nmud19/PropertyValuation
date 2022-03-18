@@ -40,7 +40,8 @@ class CreateData() :
 
     def feature_engg_v2(self, df:pd.DataFrame) -> pd.DataFrame:
         """ log transform skewed numeric features"""
-        numeric_feats = df.dtypes[df.dtypes != "object"].index
+        numeric_feats = list(df.dtypes[df.dtypes != "object"].index)
+        numeric_feats.remove('SalePrice')
         skewed_feats = df[numeric_feats].apply(lambda x: skew(x.dropna())) #compute skewness
         skewed_feats = skewed_feats[skewed_feats > 0.75]
         skewed_feats = skewed_feats.index

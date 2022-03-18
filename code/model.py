@@ -11,13 +11,15 @@ class QuantModel(LightningModule):
         self._quantile_list = quantiles
         self._num_quantiles = len(self._quantile_list)
         self.fc1 = nn.Linear(num_features, 256)
-        self.fc2 = nn.Linear(256, 32)
+        self.fc21 = nn.Linear(256, 128)
+        self.fc22 = nn.Linear(128, 32)
         self.fc3 = nn.Linear(32, self._num_quantiles)
 
     def forward(self, x):
         """Prediction; pass the input through all layers"""
         x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
+        x = F.relu(self.fc21(x))
+        x = F.relu(self.fc22(x))
         x = self.fc3(x)
         return x
     
