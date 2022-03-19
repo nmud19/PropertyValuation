@@ -1,11 +1,14 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from pytorch_lightning import LightningDataModule,LightningModule 
+from pytorch_lightning import LightningDataModule, LightningModule
 from typing import List
 
+
 class QuantModel(LightningModule):
-    def __init__(self, num_features:int=4, quantiles:List[float]=[0.1,0.5,0.9])->None:
+    def __init__(
+        self, num_features: int = 4, quantiles: List[float] = [0.1, 0.5, 0.9]
+    ) -> None:
         """Init a model"""
         super(QuantModel, self).__init__()
         self._quantile_list = quantiles
@@ -22,28 +25,28 @@ class QuantModel(LightningModule):
         x = F.relu(self.fc22(x))
         x = self.fc3(x)
         return x
-    
+
     def training_step(self, batch, batch_idx):
         """Invoked while training the model. Quantile loss is used here."""
         x, y = batch
         y_hat = self(x)
-        loss = quantile_loss(y_hat, y,self._quantile_list)
+        loss = quantile_loss(y_hat, y, self._quantile_list)
         return loss
 
     def validation_step(self, batch, batch_idx):
         """Invoked while training the model. Quantile loss is used here."""
         x, y = batch
         y_hat = self(x)
-        loss = quantile_loss(y_hat, y,self._quantile_list)
-        self.log_dict({"quant_loss" : loss} )
+        loss = quantile_loss(y_hat, y, self._quantile_list)
+        self.log_dict({"quant_loss": loss})
         return loss
-    
+
     def test_step(self, batch, batch_idx):
         """Invoked while training the model. Quantile loss is used here."""
         x, y = batch
         y_hat = self(x)
-        loss = quantile_loss(y_hat, y,self._quantile_list)
-        self.log_dict({"quant_loss" : loss} )
+        loss = quantile_loss(y_hat, y, self._quantile_list)
+        self.log_dict({"quant_loss": loss})
         return loss
 
     def predict_step(self, batch, batch_idx):
